@@ -54,8 +54,8 @@ def person_list():
 def person_detail():
     return rx.container(
         rx.vstack(
-            rx.heading(),
-            rx.hstack(rx.text("FirstName"), rx.text("LastName")),
+            rx.heading(PersonDetailState.person.sca_name),
+            rx.hstack(rx.text(PersonDetailState.person.first_name), rx.text(PersonDetailState.person.last_name)),
             rx.divider(),
             rx.heading("Degrees"),
             rx.data_table(),
