@@ -1,28 +1,40 @@
 import reflex as rx
 from tutr_reflex.state import State
 from tutr_reflex.templates.template import template
+from tutr_reflex.db import Person
 from typing import List
 
 
 class PersonListState(State):
+    people: List[Person]
 
-    @rx.var()
-    def people() -> List:
-        return []
+    def get_people(self):
+        with rx.session() as session:
+            self.people = session.exec(
+                Person.select([Person.id, Person.first_name, Person.last_name, Person.sca_name, Person.branch.branch_name])
+                ).all()
+
 
 
 class PersonDetailState(State):
-    
-    @rx.var()
-    def person():
-        return {}
+    person: Person
+
+    @rx.var
+    def person_id(self) -> str:
+        return self.router.page.params.get('pid', 'no pid')
+
+    def get_person(self):
+        with rx.session() as session:
+            self.person = session.exec(Person.select.where(Person.id.equals(PersonDetailState.person_id))).one()
 
 
-class PersonUpdateState(State):
-    pass
+class PersonUpdateState(PersonDetailState):
+
+    def handle_submit(self, form_data:dict):
+        pass
 
 
-@template(route="/members", title="Members", image="/github.svg")
+@template(route="/members", title="Members")
 def person_list():
     return rx.container(
         rx.foreach(
@@ -38,7 +50,7 @@ def person_list():
         )
     )
 
-@template(route="/members/[pid]", title="Member Detail", image="/github.svg")
+@template(route="/members/[pid]", title="Member Detail")
 def person_detail():
     return rx.container(
         rx.vstack(
@@ -54,6 +66,6 @@ def person_detail():
     )
     pass
 
-@template(route="/members/[pid]/update", title="Update Member", image="/github.svg")
+@template(route="/members/[pid]/update", title="Update Member")
 def person_update():
     pass
