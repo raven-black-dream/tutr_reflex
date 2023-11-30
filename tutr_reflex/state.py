@@ -1,7 +1,7 @@
 """Base state for the app."""
 
 import reflex as rx
-from tutr_reflex.db import Attendance, Branch, Class, PersonDegree, Person
+from tutr_reflex.db import Attendance, Branch, Class, ClassDesignation, PersonDegree, Person
 from tutr_reflex.auth.auth_session import AuthSession, User
 from datetime import datetime, timedelta, timezone
 from sqlmodel import select
@@ -300,3 +300,87 @@ class PersonUpdateState(PersonDetailState):
                 self.person.guardian_id = form_data['guardian']
             session.commit()
             rx.redirect(f'/member/{self.person_id}')
+
+
+class ClassListState(State):
+    pass
+
+
+class ClassDetailState(State):
+
+    class_data: Class | None = None
+    
+
+    @rx.var
+    def class_id(self) -> str:
+        return self.router.page.params.get('pid', 'no pid')
+    
+    def get_person(self):
+        with rx.session() as session:
+            self.class_data = session.exec(Class.select.where(Class.id == self.class_id)).one()
+            self.teacher = self.class_data.teacher.sca_name
+            
+
+
+
+class ClassUpdate(rx.Base):
+    class_name: str = '',
+    length: float = 0.0,
+    cost: float = 0.0,
+    min_participants:int = 1,
+    max_participants:int = 1,
+    travel:bool = False,
+    student_requirements: str = '',
+    location_requirements: str = '',
+    description: str = '',
+    prerequisites: str = '',
+    approved: bool = False,
+    designation: str = '',
+    person: str = ''
+
+
+class ClassUpdateState(ClassDetailState):
+
+    class_obj: ClassUpdate = ClassUpdate()
+
+    @rx.var
+    def class_designation_options(self) -> List[Option]:
+        with rx.session() as session:
+            designations = session.exec(ClassDesignation.select.where()).all()
+            return [Option(label=designation.branch_name, value=designation.id) for designation in designations]
+        
+    @rx.var
+    def teacher_options(self) -> List[Option]:
+        with rx.session() as session:
+            teachers = session.exec(Person.select.where(Person.teacher == True)).all()
+            return [Option(label=teacher.sca_name, value=teacher.id) for teacher in teachers]
+        
+    def get_class_obj(self):
+        if self.person is None:
+            self.person_dict = ClassUpdate()
+            return None
+        self.person_dict = ClassUpdate(
+            class_name = self.class_data.class_name,
+            length = self.class_data.length,
+            cost = self.class_data.cost,
+            min_participants = self.class_data.min_participants,
+            max_participants = self.class_data.max_participants,
+            travel = self.class_data.travel,
+            student_requirements = self.class_data.student_requirements,
+            location_requirements = self.class_data.location_requirements,
+            description = self.class_data.description,
+            prerequisites = self.class_data.prerequisites,
+            approved = self.class_data.approved,
+            designation = self.class_data.designation_id,
+            person = self.class_data.person_id
+        )
+        
+    def approved_on_change(self, checked: bool):
+        self.class_obj.approved = checked
+        print('pause')
+
+    def travel_on_change(self, checked: bool):
+        self.class_obj.travel = checked
+
+    def handle_submit(self, form_data:dict):
+        pass
