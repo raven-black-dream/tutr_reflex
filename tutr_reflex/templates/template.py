@@ -24,7 +24,7 @@ def menu_button() -> rx.Component:
         The menu button component.
     """
     from reflex.page import get_decorated_pages
-
+    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register']
     return rx.box(
         rx.menu(
             rx.menu_button(
@@ -43,7 +43,7 @@ def menu_button() -> rx.Component:
                             width="100%",
                         )
                     )
-                    for page in get_decorated_pages()
+                    for page in get_decorated_pages() if not page["route"] in excludes
                 ],
                 rx.menu_divider(),
                 rx.menu_item(

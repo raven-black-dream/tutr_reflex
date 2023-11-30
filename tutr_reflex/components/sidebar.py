@@ -15,16 +15,16 @@ def sidebar_header() -> rx.Component:
     return rx.hstack(
         # The logo.
         rx.image(
-            src="/icon.svg",
-            height="2em",
+            src="/tutrlogo.png",
+            height="6em",
         ),
         rx.spacer(),
         # Link to Reflex GitHub repo.
         rx.link(
             rx.center(
                 rx.image(
-                    src="/github.svg",
-                    height="3em",
+                    src="/northernregion.gif",
+                    height="6em",
                     padding="0.5em",
                 ),
                 box_shadow=styles.box_shadow,
@@ -34,7 +34,7 @@ def sidebar_header() -> rx.Component:
                     "bg": styles.accent_color,
                 },
             ),
-            href="https://github.com/reflex-dev/reflex",
+            href="http://tutr.tirrigh.org",
         ),
         width="100%",
         border_bottom=styles.border,
@@ -77,7 +77,7 @@ def sidebar_item(text: str, icon: str, url: str) -> rx.Component:
     """
     # Whether the item is active.
     active = (State.router.page.path == f"/{text.lower()}") | (
-        (State.router.page.path == "/") & text == "Home"
+            (State.router.page.path == "/") & text == "Home"
     )
 
     return rx.link(
@@ -118,32 +118,47 @@ def sidebar() -> rx.Component:
     """
     # Get all the decorated pages and add them to the sidebar.
     from reflex.page import get_decorated_pages
-
+    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register']
     return rx.box(
-        rx.vstack(
-            sidebar_header(),
             rx.vstack(
-                *[
-                    sidebar_item(
-                        text=page.get("title", page["route"].strip("/").capitalize()),
-                        icon=page.get("image", "/github.svg"),
-                        url=page["route"],
+                sidebar_header(),
+                rx.cond(
+                    State.is_authenticated,
+                    rx.vstack(
+                        *[
+                            sidebar_item(
+                                text=page.get("title", page["route"].strip("/").capitalize()),
+                                icon=page.get("image", "/northernregion.gif"),
+                                url=page["route"],
+
+                            )
+                            for page in get_decorated_pages() if not page["route"] in excludes
+                        ],
+                        width="100%",
+                        overflow_y="auto",
+                        align_items="flex-start",
+                        padding="1em",
+                    ),
+                    rx.container(
+                        sidebar_item(
+                            text="Login",
+                            icon="/northernregion.gif",
+                            url="/login",
+                        ),
+                        width="100%",
+                        overflow_y="auto",
+                        align_items="flex-start",
+                        padding="1em",
                     )
-                    for page in get_decorated_pages()
-                ],
-                width="100%",
-                overflow_y="auto",
-                align_items="flex-start",
-                padding="1em",
+                ),
+                rx.spacer(),
+                sidebar_footer(),
+                height="100dvh",
             ),
-            rx.spacer(),
-            sidebar_footer(),
-            height="100dvh",
-        ),
-        display=["none", "none", "block"],
-        min_width=styles.sidebar_width,
-        height="100%",
-        position="sticky",
-        top="0px",
-        border_right=styles.border,
-    )
+            display=["none", "none", "block"],
+            min_width=styles.sidebar_width,
+            height="100%",
+            position="sticky",
+            top="0px",
+            border_right=styles.border
+        )
