@@ -321,8 +321,6 @@ class ClassDetailState(State):
             self.teacher = self.class_data.teacher.sca_name
             
 
-
-
 class ClassUpdate(rx.Base):
     class_name: str = '',
     length: float = 0.0,
@@ -377,7 +375,77 @@ class ClassUpdateState(ClassDetailState):
         
     def approved_on_change(self, checked: bool):
         self.class_obj.approved = checked
-        print('pause')
+
+    def travel_on_change(self, checked: bool):
+        self.class_obj.travel = checked
+
+    def handle_submit(self, form_data:dict):
+        pass
+
+
+class EventListState(State):
+    pass
+
+
+class EventDetailState(State):
+    pass
+
+
+class EventUpdate(rx.Base):
+    
+    event_name: str = ''
+    start_date: datetime = datetime.now()
+    end_date: datetime = datetime.now()
+    tutr_surcharge: float = 0.0
+    location_name: str = ''
+    apt_num: str = ''
+    street: str = ''
+    city: str = ''
+    postal_code: str = ''
+    closed: bool = False
+    approved: bool = False
+    branch: str = ''
+    tutr_coordinator: str = ''
+
+
+class EventUpdateState(State):
+
+    event_obj: EventUpdate = EventUpdate()
+
+    @rx.var
+    def branch_options(self) -> List[Option]:
+        with rx.session() as session:
+            branches = session.exec(Branch.select.where()).all()
+            return [Option(label=branch.branch_name, value=branch.id) for branch in branches]
+        
+    @rx.var
+    def coordinator_options(self) -> List[Option]:
+        with rx.session() as session:
+            people = session.exec(Person.select.where(Person.teacher == True)).all()
+            return [Option(label=person.sca_name, value=person.id) for person in people]
+        
+    def get_class_obj(self):
+        if self.person is None:
+            self.person_dict = ClassUpdate()
+            return None
+        self.person_dict = ClassUpdate(
+            class_name = self.class_data.class_name,
+            length = self.class_data.length,
+            cost = self.class_data.cost,
+            min_participants = self.class_data.min_participants,
+            max_participants = self.class_data.max_participants,
+            travel = self.class_data.travel,
+            student_requirements = self.class_data.student_requirements,
+            location_requirements = self.class_data.location_requirements,
+            description = self.class_data.description,
+            prerequisites = self.class_data.prerequisites,
+            approved = self.class_data.approved,
+            designation = self.class_data.designation_id,
+            person = self.class_data.person_id
+        )
+        
+    def approved_on_change(self, checked: bool):
+        self.class_obj.approved = checked
 
     def travel_on_change(self, checked: bool):
         self.class_obj.travel = checked
