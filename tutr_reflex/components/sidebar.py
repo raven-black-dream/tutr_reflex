@@ -118,7 +118,9 @@ def sidebar() -> rx.Component:
     """
     # Get all the decorated pages and add them to the sidebar.
     from reflex.page import get_decorated_pages
-    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register']
+    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register',
+                '/classes/[pid]', '/classes/[pid]/update', '/events/[pid]', '/events/[pid]/update',
+                ]
     return rx.box(
             rx.vstack(
                 sidebar_header(),

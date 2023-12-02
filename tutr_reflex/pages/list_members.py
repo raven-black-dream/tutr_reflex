@@ -10,7 +10,7 @@ def person_list() -> rx.Component:
     return rx.box(
         rx.box(
             rx.heading(
-                "Filter by tags:",
+                "Filter by Member Name:",
                 size="sm",
             ),
             rx.input(

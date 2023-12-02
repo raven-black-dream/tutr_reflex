@@ -12,30 +12,30 @@ as well as to change their roles.
 
 """
 
-class UserManagementState(State):
 
-    options: List[rx.option] = ['event_steward', 'dean', 'governor', 'registrar', 'user']
+class UserManagementState(State):
+    options: List[str] = ['admin', 'event_steward', 'dean', 'governor', 'registrar', 'user']
     role: str = ''
 
     @rx.var
-    def users():
+    def users(self) -> List[User]:
         with rx.session() as session:
             result = session.exec(User.select.where()).all()
         return result
-    
-    def toggle_access(user_id:int):
+
+    def toggle_access(self, user_id: int):
         with rx.session() as session:
             user = session.exec(User.select.where(User.id == user_id)).all()
             user.enabled = not user.enabled
             session.commit()
 
-    def save_role(user_id:int, value:str):
+    def save_role(self, user_id: int, value: str):
         with rx.session() as session:
-            user = session.exec(User.select.where(User.id == user_id)).all()
-            user.role = not user.enabled
+            user = session.exec(User.select.where(User.id == user_id)).one()
+            user.role = value
             session.commit()
 
-    
+
 @template(route='/user_management', title="User Management")
 def user_management_page() -> rx.Component:
     return rx.box(
@@ -43,9 +43,9 @@ def user_management_page() -> rx.Component:
             rx.table(
                 rx.thead(
                     rx.tr(
-                        [
-                         rx.th(column)
-                         for column in ['Username' , 'role', 'enabled', 'actions']
+                        *[
+                            rx.th(column)
+                            for column in ['Username', 'role', 'actions']
                         ]
                     )
                 ),
@@ -59,11 +59,12 @@ def user_management_page() -> rx.Component:
                                 default_value=user.role,
                                 on_change=lambda c: UserManagementState.save_role(user.id, c)
                             )),
-                            rx.td(user.enabled),
                             rx.td(rx.cond(
                                 user.enabled,
-                                rx.button("Revoke Access", on_click=lambda c: UserManagementState.toggle_access(user.id)),
-                                rx.button("Grant Access", on_click=lambda c: UserManagementState.toggle_access(user.id))
+                                rx.button("Revoke Access",
+                                          on_click=UserManagementState.toggle_access(user.id)),
+                                rx.button("Grant Access",
+                                          on_click=UserManagementState.toggle_access(user.id))
                             ))
                         )
                     )

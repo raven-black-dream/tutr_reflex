@@ -1,16 +1,16 @@
 """Base state for the app."""
 
 import reflex as rx
-from tutr_reflex.db import Attendance, Branch, Class, ClassDesignation, PersonDegree, Person
+from tutr_reflex.db import Attendance, Branch, Class, ClassDesignation, db_Session, Event, PersonDegree, Person
 from tutr_reflex.auth.auth_session import AuthSession, User
 from datetime import datetime, timedelta, timezone
 from sqlmodel import select
 from typing import List
 import pandas as pd
 
-
 AUTH_TOKEN_LOCAL_STORAGE_KEY = "_auth_tokens"
 DEFAULT_AUTH_SESSION_EXPIRATION_DELTA = timedelta(days=7)
+
 
 class State(rx.State):
     """Base state for the app.
@@ -281,7 +281,6 @@ class PersonUpdateState(PersonDetailState):
     def minor_on_change(self, checked: bool):
         self.person_dict.minor = checked
 
-
     def handle_submit(self, form_data: dict):
         with rx.session() as session:
             self.person.sca_name = form_data['sca_name']
@@ -303,31 +302,33 @@ class PersonUpdateState(PersonDetailState):
 
 
 class ClassListState(State):
+
     pass
 
 
 class ClassDetailState(State):
-
     class_data: Class | None = None
-    
+    teacher: str = ''
+    credits: float = 0.0
 
     @rx.var
     def class_id(self) -> str:
         return self.router.page.params.get('pid', 'no pid')
-    
-    def get_person(self):
+
+    def get_class(self):
         with rx.session() as session:
             self.class_data = session.exec(Class.select.where(Class.id == self.class_id)).one()
             self.teacher = self.class_data.teacher.sca_name
-            
+            self.credits = self.class_data.designation.credits
+
 
 class ClassUpdate(rx.Base):
     class_name: str = '',
-    length: float = 0.0,
-    cost: float = 0.0,
-    min_participants:int = 1,
-    max_participants:int = 1,
-    travel:bool = False,
+    class_length: str = "0.0",
+    cost: str = "0.0",
+    min_participants: str = "1",
+    max_participants: str = "1",
+    travel: bool = False,
     student_requirements: str = '',
     location_requirements: str = '',
     description: str = '',
@@ -338,65 +339,144 @@ class ClassUpdate(rx.Base):
 
 
 class ClassUpdateState(ClassDetailState):
-
     class_obj: ClassUpdate = ClassUpdate()
 
     @rx.var
     def class_designation_options(self) -> List[Option]:
         with rx.session() as session:
             designations = session.exec(ClassDesignation.select.where()).all()
-            return [Option(label=designation.branch_name, value=designation.id) for designation in designations]
-        
+            return [Option(label=designation.designation_name, value=designation.id) for designation in designations]
+
     @rx.var
     def teacher_options(self) -> List[Option]:
+        """
+        :return: list of Reflex Options for the teacher select box.
+
+        Process Note:
+        Before a Teacher can be included in the list they need to have and SCA Name listed in their profile.
+
+        """
         with rx.session() as session:
             teachers = session.exec(Person.select.where(Person.teacher == True)).all()
-            return [Option(label=teacher.sca_name, value=teacher.id) for teacher in teachers]
-        
+            return [Option(label=teacher.sca_name, value=teacher.id) for teacher in teachers
+                    if teacher.sca_name is not None]
+
     def get_class_obj(self):
         if self.person is None:
-            self.person_dict = ClassUpdate()
+            self.class_obj = ClassUpdate()
             return None
-        self.person_dict = ClassUpdate(
-            class_name = self.class_data.class_name,
-            length = self.class_data.length,
-            cost = self.class_data.cost,
-            min_participants = self.class_data.min_participants,
-            max_participants = self.class_data.max_participants,
-            travel = self.class_data.travel,
-            student_requirements = self.class_data.student_requirements,
-            location_requirements = self.class_data.location_requirements,
-            description = self.class_data.description,
-            prerequisites = self.class_data.prerequisites,
-            approved = self.class_data.approved,
-            designation = self.class_data.designation_id,
-            person = self.class_data.person_id
+        self.class_obj = ClassUpdate(
+            class_name=self.class_data.class_name,
+            class_length=str(self.class_data.class_length),
+            cost=str(self.class_data.cost),
+            min_participants=str(self.class_data.min_participants),
+            max_participants=str(self.class_data.max_participants),
+            travel=self.class_data.travel,
+            student_requirements=self.class_data.student_requirements,
+            location_requirements=self.class_data.location_requirements,
+            description=self.class_data.description,
+            prerequisites=self.class_data.prerequisites,
+            approved=self.class_data.approved,
+            designation=self.class_data.designation_id,
+            person=self.class_data.person_id
         )
-        
+
     def approved_on_change(self, checked: bool):
         self.class_obj.approved = checked
 
     def travel_on_change(self, checked: bool):
         self.class_obj.travel = checked
 
-    def handle_submit(self, form_data:dict):
+    def handle_submit(self, form_data: dict):
         pass
 
 
+class EventListObject(rx.Base):
+    id: int = 0
+    event_name: str = ''
+    start_date: str = ''
+    end_date: str = ''
+    approved: bool = False
+    branch: str = ''
+
+
 class EventListState(State):
-    pass
+    filter_expr: str = ""
+
+    @rx.cached_var
+    def filtered_data(self) -> List[EventListObject]:
+        event_name = self.filter_expr
+
+        with rx.session() as session:
+            results: List[Event] = session.exec(Event.select.where(Event.event_name.contains(event_name)).order_by(Event.start_date)).all()
+            result = [
+                EventListObject(
+                    id=event.id,
+                    event_name=event.event_name,
+                    start_date=event.start_date.strftime('%m/%d/%Y'),
+                    end_date=event.end_date.strftime('%m/%d/%Y'),
+                    approved=event.approved,
+                    branch=event.branch.branch_name,
+                ) for event in results
+            ]
+            return result
+
+    def input_filter_on_change(self, value):
+        self.filter_expr = value
+        # for DEBUGGING
+        yield rx.console_log(
+            f"Filter set to: {self.filter_expr}"
+        )
+
+class EventClass(rx.Base):
+    session_id: int = 0
+    class_name: str = ''
+    class_length: str = "0.0"
+    cost: str = "0.0"
+    teacher_id: int = 0
+    teacher: str = ''
 
 
 class EventDetailState(State):
-    pass
+    event_data: Event | None = None
+    coordinator: str = ''
+    branch: str = ''
+
+    event_classes: List[db_Session] | None = None
+
+    @rx.var
+    def event_id(self) -> str:
+        return self.router.page.params.get('pid', 'no pid')
+
+    def get_event(self):
+        with rx.session() as session:
+            self.event_data = session.exec(Event.select.where(Event.id == self.event_id)).one()
+            self.coordinator = self.event_data.coordinator.sca_name
+            self.branch = self.event_data.branch.branch_name
+
+    @rx.var
+    def event_classes(self) -> List[EventClass]:
+        if self.event_id == 'no pid':
+            return []
+        with rx.session() as session:
+            event_classes = session.exec(db_Session.select.where(db_Session.event_id == self.event_id)).all()
+            return [EventClass(
+                session_id=event_class.id,
+                class_name=event_class.class_info.class_name,
+                class_length=str(event_class.class_info.class_length),
+                cost=str(event_class.class_info.cost),
+                teacher_id=event_class.class_info.person_id,
+                teacher=event_class.class_info.teacher.sca_name if event_class.class_info.teacher.sca_name else
+                event_class.class_info.teacher.first_name + ' ' + event_class.class_info.teacher.last_name
+            ) for event_class in event_classes]
+
 
 
 class EventUpdate(rx.Base):
-    
     event_name: str = ''
-    start_date: datetime = datetime.now()
-    end_date: datetime = datetime.now()
-    tutr_surcharge: float = 0.0
+    start_date: str = datetime.now().strftime('%m/%d/%Y')
+    end_date: str = datetime.now().strftime('%m/%d/%Y')
+    tutr_surcharge: str = "0.0"
     location_name: str = ''
     apt_num: str = ''
     street: str = ''
@@ -408,8 +488,7 @@ class EventUpdate(rx.Base):
     tutr_coordinator: str = ''
 
 
-class EventUpdateState(State):
-
+class EventUpdateState(EventDetailState):
     event_obj: EventUpdate = EventUpdate()
 
     @rx.var
@@ -417,38 +496,38 @@ class EventUpdateState(State):
         with rx.session() as session:
             branches = session.exec(Branch.select.where()).all()
             return [Option(label=branch.branch_name, value=branch.id) for branch in branches]
-        
+
     @rx.var
     def coordinator_options(self) -> List[Option]:
         with rx.session() as session:
-            people = session.exec(Person.select.where(Person.teacher == True)).all()
-            return [Option(label=person.sca_name, value=person.id) for person in people]
-        
-    def get_class_obj(self):
-        if self.person is None:
-            self.person_dict = ClassUpdate()
+            people = session.exec(Person.select.where(Person.sca_name is not None)).all()
+            return [Option(label=person.sca_name, value=person.id) for person in people if person.sca_name is not None]
+
+    def get_event_obj(self):
+        if self.event is None:
+            self.event_obj = EventUpdate()
             return None
-        self.person_dict = ClassUpdate(
-            class_name = self.class_data.class_name,
-            length = self.class_data.length,
-            cost = self.class_data.cost,
-            min_participants = self.class_data.min_participants,
-            max_participants = self.class_data.max_participants,
-            travel = self.class_data.travel,
-            student_requirements = self.class_data.student_requirements,
-            location_requirements = self.class_data.location_requirements,
-            description = self.class_data.description,
-            prerequisites = self.class_data.prerequisites,
-            approved = self.class_data.approved,
-            designation = self.class_data.designation_id,
-            person = self.class_data.person_id
+        self.event_obj = EventUpdate(
+            event_name=self.event_data.event_name,
+            start_date=self.event_data.start_date,
+            end_date=self.event_data.end_date,
+            tutr_surcharge=self.event_data.tutr_surcharge,
+            location_name=self.event_data.location_name,
+            apt_num=self.event_data.apt_num,
+            street=self.event_data.street,
+            city=self.event_data.city,
+            postal_code=self.event_data.postal_code,
+            closed=self.event_data.closed,
+            approved=self.event_data.approved,
+            branch=self.event_data.branch_id,
+            tutr_coordinator=self.event_data.tutr_coordinator_id
         )
-        
+
     def approved_on_change(self, checked: bool):
-        self.class_obj.approved = checked
+        self.event_obj.approved = checked
 
-    def travel_on_change(self, checked: bool):
-        self.class_obj.travel = checked
+    def closed_on_change(self, checked: bool):
+        self.event_obj.closed = checked
 
-    def handle_submit(self, form_data:dict):
+    def handle_submit(self, form_data: dict):
         pass

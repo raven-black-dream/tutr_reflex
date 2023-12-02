@@ -53,7 +53,8 @@ class Branch(rx.Model, table=True):
     id: int = Field(primary_key=True)
     branch_name: str
     principality_id: int = Field(foreign_key='principalities.id')
-    
+
+    events_run: List['Event'] = Relationship(back_populates='branch')
     people: List['Person'] = Relationship(back_populates='branch')
     principality: "Principality" = Relationship(back_populates='branches')
 
@@ -63,7 +64,7 @@ class Class(rx.Model, table=True):
 
     id: int = Field(primary_key=True)
     class_name: str
-    length: Optional[float]
+    class_length: Optional[float]
     cost: float
     min_participants: int
     max_participants: int
@@ -153,6 +154,7 @@ class Event(rx.Model, table=True):
     branch_id: int = Field(foreign_key='branches.id')
     tutr_coordinator: Optional[int] = Field(foreign_key='person.id')
 
+    branch: 'Branch' = Relationship(back_populates='events_run')
     coordinator: 'Person' = Relationship(back_populates='events_run')
     classes: List[Class] = Relationship(back_populates='events', link_model=db_Session)
 

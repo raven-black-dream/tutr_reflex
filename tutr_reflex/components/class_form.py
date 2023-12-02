@@ -4,10 +4,10 @@ from tutr_reflex.state import ClassUpdateState
 
 def class_form(
         class_name: str = '',
-        length: float = 0.0,
-        cost: float = 0.0,
-        min_participants:int = 1,
-        max_participants:int = 1,
+        length: str = "0.0",
+        cost: str = "0.0",
+        min_participants: str = "1",
+        max_participants: str = "1",
         travel:bool = False,
         student_requirements: str = '',
         location_requirements: str = '',
@@ -31,10 +31,12 @@ def class_form(
                 rx.hstack(
                     rx.text("Class Designation"),
                     rx.select(
-                        ClassUpdateState.class_designation_options,
-                        lambda option: rx.option(
-                            option.label,
-                            value=option.value
+                        rx.foreach(
+                            ClassUpdateState.class_designation_options,
+                            lambda option: rx.option(
+                                option.label,
+                                value=option.value,
+                            ),
                         ),
                         id='class_designation',
                         default_value=designation
@@ -43,10 +45,12 @@ def class_form(
                 rx.hstack(
                     rx.text(),
                     rx.select(
-                        ClassUpdateState.teacher_options,
-                        lambda option: rx.option(
-                            option.label,
-                            value=option.value
+                        rx.foreach(
+                            ClassUpdateState.teacher_options,
+                            lambda option: rx.option(
+                                option.label,
+                                value=option.value,
+                            ),
                         ),
                         id='teacher',
                         default_value=person

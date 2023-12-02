@@ -7,6 +7,7 @@ from tutr_reflex.components.sidebar import sidebar
 from typing import Callable
 
 import reflex as rx
+from tutr_reflex.state import State
 
 # Meta tags for the app.
 default_meta = [
@@ -24,8 +25,12 @@ def menu_button() -> rx.Component:
         The menu button component.
     """
     from reflex.page import get_decorated_pages
-    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register']
-    return rx.box(
+    excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register',
+                '/classes/[pid]', '/classes/[pid]/update', '/events/[pid]', '/events/[pid]/update',
+                ]
+    return rx.cond(
+        State.is_authenticated,
+        rx.box(
         rx.menu(
             rx.menu_button(
                 rx.icon(
@@ -58,6 +63,36 @@ def menu_button() -> rx.Component:
         right="1.5em",
         top="1.5em",
         z_index="500",
+    ),
+        rx.box(
+            rx.menu(
+                rx.menu_button(
+                    rx.icon(
+                        tag="hamburger",
+                        size="4em",
+                        color=styles.text_color,
+                    ),
+                ),
+                rx.menu_list(
+                    rx.menu_item(
+                        "Login",
+                        href="/login",
+                        width="100%",
+                    ),
+                    rx.menu_divider(),
+                    rx.menu_item(
+                        rx.link("About", href="https://github.com/raven-black-dream/tutr_reflex", width="100%")
+                    ),
+                    rx.menu_item(
+                        rx.link("Contact", href="mailto:founders@=reflex.dev", width="100%")
+                    ),
+                ),
+            ),
+            position="fixed",
+            right="1.5em",
+            top="1.5em",
+            z_index="500",
+        )
     )
 
 
@@ -107,21 +142,37 @@ def template(
             on_load=on_load,
         )
         def templated_page():
-            return rx.hstack(
-                sidebar(),
-                rx.box(
+            return rx.cond(
+                    State.is_authenticated | (route == "/login") | (route == "/register"),
+                    rx.hstack(
+                    sidebar(),
                     rx.box(
-                        page_content(),
-                        **styles.template_content_style,
+                        rx.box(
+                            page_content(),
+                            **styles.template_content_style,
+                        ),
+                        **styles.template_page_style,
                     ),
-                    **styles.template_page_style,
+                    menu_button(),
+                    align_items="flex-start",
+                    transition="left 0.5s, width 0.5s",
+                    position="relative",
                 ),
-                menu_button(),
-                align_items="flex-start",
-                transition="left 0.5s, width 0.5s",
-                position="relative",
+                rx.hstack(
+                    sidebar(),
+                    rx.box(
+                        rx.box(
+                            rx.text("Please Log in to access this page."),
+                            **styles.template_content_style,
+                        ),
+                        **styles.template_page_style,
+                    ),
+                    menu_button(),
+                    align_items="flex-start",
+                    transition="left 0.5s, width 0.5s",
+                    position="relative",
+                )
             )
-
         return templated_page
 
     return decorator
