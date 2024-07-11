@@ -14,7 +14,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN python3.11 -m venv $VIRTUAL_ENV
 
 # Install app requirements and reflex inside virtualenv
-RUN pip install -r requirements.txt
+RUN pip install poetry
+RUN poetry install
 
 # Deploy templates and prepare app
 RUN reflex init
