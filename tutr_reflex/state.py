@@ -388,7 +388,47 @@ class ClassUpdateState(ClassDetailState):
         self.class_obj.travel = checked
 
     def handle_submit(self, form_data: dict):
-        pass
+        with rx.session() as session:
+            if self.class_obj.class_name == ('',):
+                class_data = Class(
+                    class_name=form_data['class_name'],
+                    class_length=form_data['length'],
+                    cost=form_data['cost'],
+                    min_participants=form_data['min_participants'],
+                    max_participants=form_data['max_participants'],
+                    travel=form_data['travel'],
+                    student_requirements=form_data['student_requirements'],
+                    location_requirements=form_data['location_requirements'],
+                    description=form_data['description'],
+                    prerequisites=form_data['prerequisites'],
+                    approved=form_data['approved'],
+                    designation_id=form_data['class_designation'],
+                    person_id=form_data['teacher']
+                )
+                session.add(
+                    class_data
+                )
+                session.commit()
+                session.refresh(class_data)
+                rx.redirect(f'classes/{class_data.id}')
+            else:
+                class_data = session.exec(Class.select.where(Class.class_name == form_data['class_name'])).one()
+                class_data.class_length = form_data['class_length']
+                class_data.cost = form_data['cost']
+                class_data.min_participants = form_data['min_participants']
+                class_data.max_participants = form_data['max_participants']
+                class_data.travel = form_data['travel']
+                class_data.student_requirements = form_data['student_requirements']
+                class_data.location_requirements = form_data['location_requirements']
+                class_data.description = form_data['description']
+                class_data.prerequisites = form_data['prerequisites']
+                class_data.approved = form_data['approved']
+                class_data.designation_id = form_data['class_designation']
+                class_data.person_id = form_data['teacher']
+                session.add(class_data)
+                session.commit()
+                session.refresh(class_data)
+                rx.redirect(f'classes/{class_data.id}')
 
 
 class EventListObject(rx.Base):
@@ -451,7 +491,7 @@ class EventDetailState(State):
     def get_event(self):
         with rx.session() as session:
             self.event_data = session.exec(Event.select.where(Event.id == self.event_id)).one()
-            self.coordinator = self.event_data.coordinator.sca_name
+            self.coordinator = self.event_data.coordinator.sca_name if self.event_data.coordinator else "no coordinator"
             self.branch = self.event_data.branch.branch_name
 
     @rx.var
@@ -530,4 +570,40 @@ class EventUpdateState(EventDetailState):
         self.event_obj.closed = checked
 
     def handle_submit(self, form_data: dict):
-        pass
+        with rx.session() as session:
+            if self.event_obj.event_name != '':
+                event = Event(
+                    event_name=form_data['event_name'],
+                    start_date=form_data['start_date'],
+                    end_date=form_data['end_date'],
+                    tutr_surcharge=form_data['tutr_surcharge'],
+                    location_name=form_data['location_name'],
+                    apt_num=form_data['apt_num'],
+                    street=form_data['street'],
+                    city=form_data['city'],
+                    postal_code=form_data['postal_code'],
+                    closed=form_data['closed'],
+                    approved=form_data['approved'],
+                    branch_id=form_data['branch'],
+                    tutr_coordinator_id=form_data['tutr_coordinator']
+                )
+            else:
+                event = session.exec(Event.select.where(Event.event_name == form_data['event_name'])).first()
+                event.event_name = form_data['event_name']
+                event.start_date = form_data['start_date']
+                event.end_date = form_data['end_date']
+                event.tutr_surcharge = form_data['tutr_surcharge']
+                event.location_name = form_data['location_name']
+                event.apt_num = form_data['apt_num']
+                event.street = form_data['street']
+                event.city = form_data['city']
+                event.postal_code = form_data['postal_code']
+                event.closed = form_data['closed']
+                event.approved = form_data['approved']
+                event.branch_id = form_data['branch']
+                event.tutr_coordinator_id = form_data['tutr_coordinator']
+
+            session.add(event)
+            session.commit()
+            session.refresh(event)
+            rx.redirect(f'events/{event.id}')

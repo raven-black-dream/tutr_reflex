@@ -174,7 +174,7 @@ class Person(rx.Model, table=True):
     __tablename__ = 'person'
 
     id: int = Field(primary_key=True)
-    sca_name: Optional[str] = Field(default='')
+    sca_name: str = Field(default='')
     first_name: Optional[str] = Field(default='')
     last_name: Optional[str] = Field(default='')
     password: Optional[str] = Field(default=None)

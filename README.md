@@ -1,73 +1,46 @@
-# Welcome to Reflex!
+# The University of Tir Righ Data Application
 
-This is the base Reflex template - installed when you run `reflex init`.
+## Introduction
 
-If you want to use a different template, pass the `--template` flag to `reflex init`.
-For example, if you want a more basic starting point, you can run:
+This web application seeks to serve a few distinct purposes.
 
-```bash
-reflex init --template blank
-```
+1) A Data Entry Platform:
+   2) Enable an easy workflow for entering all of the data for any given TUTR session.
+   3) Enable on site registration and attendance marking for classes at events.
+   4) Ease the paperwork burden on TUTR Coordinators, and other TUTR Volunteers.
+5) A Dashboard for TUTR Administration
+   6) Enables the Governor, Deans, Registrar, and Coordinators to manage their workflows in a straight-forward way
+   7) Presents the Administration with at a glance dashboards tailored to their needs.
+8) Provides a mechanism to provide students with a better sense of their classes taken.
 
-## About this Template
+## General Workflow
 
-This template has the following directory structure:
+In an ideal case the workflow would look like the following:
+1) When an Event is going to have classes a TUTR Coordinator should register (or log in to the page)
+   2) On registration the user's account will not be enabled. Please reach out to the Governor, or other Administrator to get the account enabled.
+3) Create the Event (See the Adding an Event section)
+4) As necessary, create classes. (See the Creating a Class section)
+5) Add the classes to the Event.
+6) Register members for the class (adding the member if necessary)
+   7) If Wifi or other internet connectivity is available on site this can be done on site
+   8) If not it can be done from the paperwork after the event.
+9) When the attendance information is provided mark if the student attended and passed the class.
 
-```bash
-├── README.md
-├── assets
-├── rxconfig.py
-└── {your_app}
-    ├── __init__.py
-    ├── components
-    │   ├── __init__.py
-    │   └── sidebar.py
-    ├── pages
-    │   ├── __init__.py
-    │   ├── dashboard.py
-    │   ├── index.py
-    │   └── settings.py
-    ├── state.py
-    ├── styles.py
-    ├── templates
-    │   ├── __init__.py
-    │   └── template.py
-    └── {your_app}.py
-```
+The above steps can be compressed into the day(s) after an event as well. The steps remain the same but would then be 
+done in a smaller time frame.
 
-See the [Project Structure docs](https://reflex.dev/docs/getting-started/project-structure/) for more information on general Reflex project structure.
+## Create a Event
 
-### Adding Pages
+1) Click the Create Event Button in the menu bar to the left of the screen
+2) Add the data as necessary
+3) Click the submit button.
 
-In this template, the pages in your app are defined in `{your_app}/pages/`.
-Each page is a function that returns a Reflex component.
-For example, to edit this page you can modify `{your_app}/pages/index.py`.
-See the [pages docs](https://reflex.dev/docs/components/pages/) for more information on pages.
+## Create a Class
 
-In this template, instead of using `rx.add_page` or the `@rx.page` decorator,
-we use the `@template` decorator from `{your_app}/templates/template.py`.
+1) Click the Create Class Button in the menu bar to the left of the screen
+2) Add the data as necessary
+3) Click the submit button
 
-To add a new page:
+## Adding a Class to the Event
 
-1. Add a new file in `{your_app}/pages/`. We recommend using one file per page, but you can also group pages in a single file.
-2. Add a new function with the `@template` decorator, which takes the same arguments as `@rx.page`.
-3. Import the page in your `{your_app}/pages/__init__.py` file and it will automatically be added to the app.
-
-
-### Adding Components
-
-In order to keep your code organized, we recommend putting components that are
-used across multiple pages in the `{your_app}/components/` directory.
-
-In this template, we have a sidebar component in `{your_app}/components/sidebar.py`.
-
-### Adding State
-
-In this template, we define the base state of the app in `{your_app}/state.py`.
-The base state is useful for general app state that is used across multiple pages.
-
-In this template, the base state handles the toggle for the sidebar.
-
-As your app grows, we recommend using [substates](https://reflex.dev/docs/state/substates/)
-to organize your state. You can either define substates in their own files, or if the state is
-specific to a page, you can define it in the page file itself.
+1) 

@@ -28,7 +28,7 @@ services:
       - "5432:5432"
     volumes:
       - db:/var/lib/postgresql/data
-      - ./db/backup.sql:/docker-entrypoint-initdb.d/backup.sql
+      - ./db/tutr-dev.sql:/docker-entrypoint-initdb.d/tutr-dev.sql
 
 volumes:
   db:

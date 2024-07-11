@@ -27,7 +27,7 @@ def menu_button() -> rx.Component:
     from reflex.page import get_decorated_pages
     excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register',
                 '/classes/[pid]', '/classes/[pid]/update', '/events/[pid]', '/events/[pid]/update',
-                ]
+                '/sessions/[pid]']
     return rx.cond(
         State.is_authenticated,
         rx.box(
@@ -52,7 +52,7 @@ def menu_button() -> rx.Component:
                 ],
                 rx.menu_divider(),
                 rx.menu_item(
-                    rx.link("About", href="https://github.com/reflex-dev", width="100%")
+                    rx.link("About", href="https://tutr.tirrigh.org", width="100%")
                 ),
                 rx.menu_item(
                     rx.link("Contact", href="mailto:founders@=reflex.dev", width="100%")

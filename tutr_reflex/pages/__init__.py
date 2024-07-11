@@ -1,3 +1,4 @@
+from .attendance import attendance
 from .dashboard import dashboard
 from .index import index
 from .create_member import person_create

@@ -120,7 +120,7 @@ def sidebar() -> rx.Component:
     from reflex.page import get_decorated_pages
     excludes = ['/members/[pid]', '/members/[pid]/update', '/login', '/register',
                 '/classes/[pid]', '/classes/[pid]/update', '/events/[pid]', '/events/[pid]/update',
-                ]
+                '/sessions/[pid]']
     return rx.box(
             rx.vstack(
                 sidebar_header(),
